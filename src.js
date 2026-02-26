@@ -18,7 +18,15 @@ AutoDocs = class {
           pattern: RegExp(`^${this.fn.name} got too many arguments \\((\\d+) > (\\d+)\\)$`),
           extractor: (m) => m[2]
         }
+      ],
+      type:[
+        {
+          injector: (e)=>e.split("\n")[2],
+          pattern: RegExp(`^Expected type: (.*)$`),
+          extractor: (m) => m[1]
+        }
       ]
+      
     }
   }
   
@@ -69,24 +77,32 @@ AutoDocs = class {
       state:this.state,
       output:settle
     }
-    this.return = void 0
-    this.error = void 0
-    this.state = "pending"
-    this.args = void 0
     return output
   }
   
   test(args,category,key){ //batched into 1 function for ease of testing
+    this.return = void 0
+    this.error = void 0
+    this.state = "pending"
     this.args = args
     
     this.tryFn()
     this.catchFn(category)
     this.data[category] ??= {}
-    this.data[category][key]=this.finallyFn()
+    this.data[category][key]=this.finallyFn().output
   }
   
-  arity(){ //Arity Test using test
+  tick(){ //Arity Test using test
     this.test([],"arity","min")
     this.test(Array(100).fill(1),"arity","max")
+    this.test(
+      Array(
+        +this.data.arity.min[0]
+      ).fill(1).map((e,i)=>{
+        return {[i]:i}
+      }),
+      "type",
+      "1"
+    )
   }
 }
