@@ -9,26 +9,23 @@ AutoDocs = class {
     this.check = { //check.arity
       arity:[
         {
+          injector: (e)=>e,
           pattern: RegExp(`^${this.fn.name} got too few arguments \\((\\d+) < (\\d+)\\)$`),
           extractor: (m) => m[2]
         },
         {
+          injector: (e)=>e,
           pattern: RegExp(`^${this.fn.name} got too many arguments \\((\\d+) > (\\d+)\\)$`),
           extractor: (m) => m[2]
         }
       ]
-    }
-    this.errFn = {
-      arity:e=>e
     }
   }
   
   parse(text, pattern, extractor, strict = true) {
     const match = text.match(pattern)
     if (!match) return { success: false, data: null }
-
     if (strict && match[0] !== text) return { success: false, data: null }
-
     try {
       const data = extractor(match, text)
       return { success: true, data }
@@ -37,26 +34,15 @@ AutoDocs = class {
     }
   }
 
-  regex(line, patterns, strict = true, debug = false) {
+  regex(line, patterns, strict = true) {
     let results = []
-
     for (const patternObj of patterns) {
-      const { name, pattern, extractor } = patternObj
-
-      const parseResult = this.parse(line, pattern, extractor, strict)
+      const {injector, pattern, extractor } = patternObj
+      const parseResult = this.parse(injector(line), pattern, extractor, strict)
       if (parseResult.success) {
-        results.push({
-          parser: name,
-          line,
-          data: parseResult.data
-        })
+        results.push(parseResult.data)
       }
     }
-    
-    if(!debug){
-      results = results.map(e=>e.data)
-    }
-
     return results
   }
   
@@ -72,7 +58,6 @@ AutoDocs = class {
   }
   catchFn(name){ //catch and parse error
     if(!this.error){return}
-    this.error = this.errFn[name](this.error)
     this.error = this.regex(this.error, this.check[name])
   }
   finallyFn(){ //return and reset back to defaults
