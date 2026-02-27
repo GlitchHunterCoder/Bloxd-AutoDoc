@@ -103,7 +103,7 @@ AutoDocs = class {
   
   tick(){ //Arity Test using test
     this.test([],"arity","min")
-    this.test(Array(10000).fill(1),"arity","max")
+    this.test(Array(10000).fill(1),"arity","max") //TODO: add array to arg to handle "fulfilled" or "rejected"
     this.test(
       Array(
         +this.data.arity.min[0]
