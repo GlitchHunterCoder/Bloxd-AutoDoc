@@ -1,3 +1,12 @@
+function formatType(str) {
+  return str
+    .replace(/string|valid| /g,"")
+    .replace(/^./, c => c.toUpperCase())
+    .replace(/([A-Z])([A-Z]+)/g, (_, a, b) =>
+      a + b.toLowerCase()
+    );
+}
+
 AutoDocs = class {
   constructor(fn){
     this.fn = fn
@@ -23,7 +32,7 @@ AutoDocs = class {
         {
           injector: (e)=>e.split("\n")[2],
           pattern: RegExp(`^Expected type: (.*)$`),
-          extractor: (m) => m[1]
+          extractor: (m) => formatType(m[1])
         }
       ]
       
@@ -94,7 +103,7 @@ AutoDocs = class {
   
   tick(){ //Arity Test using test
     this.test([],"arity","min")
-    this.test(Array(100).fill(1),"arity","max")
+    this.test(Array(10000).fill(1),"arity","max")
     this.test(
       Array(
         +this.data.arity.min[0]
