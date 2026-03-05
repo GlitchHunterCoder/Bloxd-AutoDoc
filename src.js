@@ -73,9 +73,10 @@ AutoDocs = class {
       this.state = "rejected"
     }
   }
-  returnFn(name){}
+  returnFn(name){
+    this.return = this.regex(this.return, this.check[name])
+  }
   catchFn(name){ //catch and parse error
-    if(!this.error){return}
     this.error = this.regex(this.error, this.check[name])
   }
   finallyFn(){ //return and reset back to defaults
@@ -90,9 +91,9 @@ AutoDocs = class {
     return output
   }
   
-  test(args,category,key,defErr){ //batched into 1 function for ease of testing
-    this.return = void 0
-    this.error = void 0
+  test(args,category,key,{E=void 0,R=void 0}={}){ //batched into 1 function for ease of testing
+    this.return = E
+    this.error = R
     this.state = "pending"
     this.args = args
     
@@ -103,7 +104,6 @@ AutoDocs = class {
       this.catchFn(category)
     }
     this.data[category] ??= {}
-    this.error ??= defErr
     this.data[category][key]=this.finallyFn().output
   }
   
