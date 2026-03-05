@@ -73,6 +73,7 @@ AutoDocs = class {
       this.state = "rejected"
     }
   }
+  returnFn(name){}
   catchFn(name){ //catch and parse error
     if(!this.error){return}
     this.error = this.regex(this.error, this.check[name])
@@ -89,15 +90,20 @@ AutoDocs = class {
     return output
   }
   
-  test(args,category,key){ //batched into 1 function for ease of testing
+  test(args,category,key,defErr){ //batched into 1 function for ease of testing
     this.return = void 0
     this.error = void 0
     this.state = "pending"
     this.args = args
     
     this.tryFn()
-    this.catchFn(category)
+    if(this.state=="fulfilled"){
+      this.returnFn(category)
+    }else{
+      this.catchFn(category)
+    }
     this.data[category] ??= {}
+    this.error ??= defErr
     this.data[category][key]=this.finallyFn().output
   }
   
