@@ -35,11 +35,11 @@ AutoDocs = class {
           extractor: (m) => formatType(m[1])
         }
       ]
-      
     }
   }
   
   parse(text, pattern, extractor, strict = true) {
+    if (!text) return { success: false, data: null }
     const match = text.match(pattern)
     if (!match) return { success: false, data: null }
     if (strict && match[0] !== text) return { success: false, data: null }
@@ -52,6 +52,7 @@ AutoDocs = class {
   }
 
   regex(line, patterns, strict = true) {
+    //TODO: if no matches are found, take error and throw
     let results = []
     for (const patternObj of patterns) {
       const {injector, pattern, extractor } = patternObj
@@ -73,51 +74,58 @@ AutoDocs = class {
       this.state = "rejected"
     }
   }
-  returnFn(name){
-    this.return = this.regex(this.return, this.check[name])
-  }
-  catchFn(name){ //catch and parse error
-    this.error = this.regex(this.error, this.check[name])
-  }
-  finallyFn(){ //return and reset back to defaults
+  catchFn(name){ //catch and parse error or return
     let settle = {
       fulfilled:this.return,
       rejected:this.error
-    }[this.state]
+    }
+    if(settle[this.state]==void 0){return} //nothing to report on
+    settle[this.state] = this.regex(settle[this.state], this.check[name])
+  }
+  finallyFn(M){ //return and reset back to defaults
+    let settle = {
+      fulfilled:this.return,
+      rejected:this.error
+    }
     let output = {
       state:this.state,
-      output:settle
+      output:settle[this.state]
     }
     return output
   }
   
-  test(args,category,key,{E=void 0,R=void 0}={}){ //batched into 1 function for ease of testing
-    this.return = E
-    this.error = R
+  test(args,category,key,{M=void 0,E=void 0,R=void 0}={}){ //batched into 1 function for ease of testing
+    this.return = void 0
+    this.error = void 0
     this.state = "pending"
     this.args = args
-    
     this.tryFn()
-    if(this.state=="fulfilled"){
-      this.returnFn(category)
-    }else{
-      this.catchFn(category)
-    }
+    
+    this.state = M??this.state //default is whatever result happened, M can override what result we care about
+    this.catchFn(category)
+    
+    //if value is undefined revert back to defaults
+    this.return ??= R
+    this.error ??= E
+    
     this.data[category] ??= {}
-    this.data[category][key]=this.finallyFn().output
+    this.data[category][key]=this.finallyFn(M).output
   }
   
-  tick(){ //Arity Test using test
-    this.test([],"arity","min")
-    this.test(Array(10000).fill(1),"arity","max") //TODO: add array to arg to handle "fulfilled" or "rejected"
+  tick(){ //Test matrix, using the this.test api
+    this.test([],"arity","min",{M:"rejected",E:0})
+    this.test(Array(10000).fill(1),"arity","max",{M:"rejected",E:Infinity}) //TODO: add array to arg to handle "fulfilled" or "rejected"
     this.test(
       Array(
-        +this.data.arity.min[0]
-      ).fill(1).map((e,i)=>{
-        return {[i]:i}
-      }),
-      "type",
-      "1"
+        this.data.arity.min
+      )
+        .fill(1)
+        .map((e,i)=>{return {[i]:i}}),
+      "type","1",{M:"rejected",E:"any"}
     )
   }
 }
+
+API_Docs = new AutoDocs(api.giveItem) //create new doc
+API_Docs.tick() //run a test
+console.log(API_Docs.data) //log the resulting data
