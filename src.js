@@ -126,18 +126,3 @@ AutoDocs = class {
     )
   }
 }
-/*
-api={
-  giveItem:(...arg)=>{
-    if(arg.length<2){
-      throw new Error(`giveItem got too few arguments (${arg.length} < 2)`)
-    }
-    if(arg.length>4){
-      throw new Error(`giveItem got too many arguments (${arg.length} > 4)`)
-    }
-  }
-}
-*/
-API_Docs = new AutoDocs(api.giveItem) //create new doc
-API_Docs.tick() //run a test
-console.log(API_Docs.data) //log the resulting data
