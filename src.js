@@ -76,12 +76,13 @@ AutoDocs = class {
   }
   catchFn(name){ //catch and parse error or return
     let settle = {
-      fulfilled:this.return,
-      rejected:this.error
+      fulfilled:"return",
+      rejected:"error"
     }
-    if(settle[this.state]==void 0){return} //nothing to report on
-    settle[this.state] = this.regex(settle[this.state], this.check[name])
+    if(this[settle[this.state]]==void 0){return} //nothing to report on
+    this[settle[this.state]] = this.regex(this[settle[this.state]], this.check[name])
   }
+  
   finallyFn(M){ //return and reset back to defaults
     let settle = {
       fulfilled:this.return,
@@ -125,7 +126,18 @@ AutoDocs = class {
     )
   }
 }
-
+/*
+api={
+  giveItem:(...arg)=>{
+    if(arg.length<2){
+      throw new Error(`giveItem got too few arguments (${arg.length} < 2)`)
+    }
+    if(arg.length>4){
+      throw new Error(`giveItem got too many arguments (${arg.length} > 4)`)
+    }
+  }
+}
+*/
 API_Docs = new AutoDocs(api.giveItem) //create new doc
 API_Docs.tick() //run a test
 console.log(API_Docs.data) //log the resulting data
