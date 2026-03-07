@@ -30,7 +30,7 @@ AutoDocs = class {
       ],
       type:[
         {
-          injector: (e)=>e.split("\n")[2],
+          injector: (e)=>e.split("\n")[2].trim(),
           pattern: RegExp(`^Expected type: (.*)$`),
           extractor: (m) => formatType(m[1])
         }
@@ -50,20 +50,19 @@ AutoDocs = class {
       return { success: false, data: null }
     }
   }
-
+  
   regex(line, patterns, strict = true) {
     //TODO: if no matches are found, take error and throw
-    let results = []
     for (const patternObj of patterns) {
       const {injector, pattern, extractor } = patternObj
       const parseResult = this.parse(injector(line), pattern, extractor, strict)
+  
       if (parseResult.success) {
-        results.push(parseResult.data)
+        return parseResult.data
       }
     }
-    return results
+    throw new Error("Error value: {\n"+this.error+"\n} didnt match")
   }
-  
 
   tryFn(){ //try fn and report on state
     try{
@@ -101,7 +100,7 @@ AutoDocs = class {
     this.state = "pending"
     this.args = args
     this.tryFn()
-    
+
     this.state = M??this.state //default is whatever result happened, M can override what result we care about
     this.catchFn(category)
     
@@ -115,11 +114,10 @@ AutoDocs = class {
   
   tick(){ //Test matrix, using the this.test api
     this.test([],"arity","min",{M:"rejected",E:0})
-    this.test(Array(10000).fill(1),"arity","max",{M:"rejected",E:Infinity}) //TODO: add array to arg to handle "fulfilled" or "rejected"
+    this.test(Array(1000).fill(1),"arity","max",{M:"rejected",E:Infinity}) //TODO: add array to arg to handle "fulfilled" or "rejected"
+
     this.test(
-      Array(
-        this.data.arity.min
-      )
+      Array(+this.data.arity.min)
         .fill(1)
         .map((e,i)=>{return {[i]:i}}),
       "type","1",{M:"rejected",E:"any"}
